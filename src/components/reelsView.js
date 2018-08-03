@@ -22,7 +22,7 @@ export default class ReelsView {
 
         var i;
         for (i = 0; i < REELS_AMOUNT; i++) {
-            let reel = new Reel();
+            let reel = new Reel(this.app.renderer.height);
             this._reels.push(reel);
 
             var gap = this.app.renderer.width - REELS_PADDING_X * 2 - reel.width * REELS_AMOUNT;

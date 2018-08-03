@@ -1,6 +1,8 @@
 'use strict';
 
-const REEL_DELAY = 600;
+import ReelSpinner from "./reelSpinner";
+
+const REEL_STOP_DELAY = 30;
 
 var isSpinning = false;
 
@@ -9,9 +11,20 @@ export default class MachineController {
 
     constructor(reels){
         this.reels = reels;
+        this.spinners = [];
         this.ticker = new PIXI.ticker.Ticker();
         this.ticker.stop();
-        this.ticker.add(this.update);
+        this.ticker.add(this.update.bind(this));
+
+        this.createSpinners();
+    }
+
+    createSpinners(){
+        var i;
+        for (i = 0; i < this.reels.length; i++) {
+            let spinner = new ReelSpinner(this.reels[i]);
+            this.spinners.push(spinner);
+        }
     }
 
     spin(){
@@ -21,21 +34,18 @@ export default class MachineController {
         isSpinning = true;
 
         var i;
-        for (i = 0; i < this.reels.length; i++) {
-            this.reels[i].spinner.spin(REEL_DELAY * i);
+        for (i = 0; i < this.spinners.length; i++) {
+            this.spinners[i].spin(REEL_STOP_DELAY * i);
         }
+
         this.ticker.start();
     }
 
-    update(delta){
+    update(deltaTime){
 
         var i;
-
-        // if (!this.reels)
-        //     return;
-
-        for (i = 0; i < this.reels.length; i++) {
-            this.reels[i].update(delta);
+        for (i = 0; i < this.spinners.length; i++) {
+            this.spinners[i].update(deltaTime);
         }
     }
 }

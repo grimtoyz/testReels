@@ -2,7 +2,6 @@
 
 
 import * as PIXI from 'pixi.js';
-// import tweenManager from ('pixi-tween');
 import ReelsView from "./components/reelsView";
 import MachineController from "./components/machineController";
 
@@ -40,9 +39,6 @@ function setup() {
     machineController = new MachineController(machine.reels);
 
     createSpinButton();
-
-    // app.ticker.add(function(delta) {
-    //     PIXI.tweenManager.update();
 }
 
 function fillBackGround() {

@@ -43587,10 +43587,10 @@ module.exports = function(module) {
 
 /***/ }),
 
-/***/ "./src/components/machine.js":
-/*!***********************************!*\
-  !*** ./src/components/machine.js ***!
-  \***********************************/
+/***/ "./src/components/machineController.js":
+/*!*********************************************!*\
+  !*** ./src/components/machineController.js ***!
+  \*********************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -43598,49 +43598,448 @@ module.exports = function(module) {
 
 
 Object.defineProperty(exports, "__esModule", {
-        value: true
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _reelSpinner = __webpack_require__(/*! ./reelSpinner */ "./src/components/reelSpinner.js");
+
+var _reelSpinner2 = _interopRequireDefault(_reelSpinner);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var REEL_STOP_DELAY = 30;
+
+var isSpinning = false;
+
+var MachineController = function () {
+    function MachineController(reels) {
+        _classCallCheck(this, MachineController);
+
+        this.reels = reels;
+        this.spinners = [];
+        this.ticker = new PIXI.ticker.Ticker();
+        this.ticker.stop();
+        this.ticker.add(this.update.bind(this));
+
+        this.createSpinners();
+    }
+
+    _createClass(MachineController, [{
+        key: "createSpinners",
+        value: function createSpinners() {
+            var i;
+            for (i = 0; i < this.reels.length; i++) {
+                var spinner = new _reelSpinner2.default(this.reels[i]);
+                this.spinners.push(spinner);
+            }
+        }
+    }, {
+        key: "spin",
+        value: function spin() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+
+            var i;
+            for (i = 0; i < this.spinners.length; i++) {
+                this.spinners[i].spin(REEL_STOP_DELAY * i);
+            }
+
+            this.ticker.start();
+        }
+    }, {
+        key: "update",
+        value: function update(deltaTime) {
+
+            var i;
+            for (i = 0; i < this.spinners.length; i++) {
+                this.spinners[i].update(deltaTime);
+            }
+        }
+    }]);
+
+    return MachineController;
+}();
+
+exports.default = MachineController;
+
+/***/ }),
+
+/***/ "./src/components/reel.js":
+/*!********************************!*\
+  !*** ./src/components/reel.js ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
 });
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Machine = function () {
-        function Machine() {
-                _classCallCheck(this, Machine);
+var REEL_WIDTH = 123;
+var ALL_SYMBOLS_AMOUNT = 50;
+var UNIQUE_SYMBOLS_AMOUNT = 13;
+var SYMBOL_SCALE = 1.889;
 
-                this.container = new PIXI.Container();
+var Reel = function () {
+    function Reel(screenHeight) {
+        _classCallCheck(this, Reel);
 
-                this.createReels();
+        this.screenHeight = screenHeight;
+        this._symbolsContainer = new PIXI.Container();
+        this.symbolIDs = [];
+
+        this.generateSymbolIDs();
+
+        this.currentSymbols = [0, 1, 2, 3, 4];
+        this.createSymbols(this.currentSymbols);
+        // this.updateSymbols(this.currentSymbols);
+
+        var texture = PIXI.utils.TextureCache['M0_000.jpg'];
+        this._symbolHeight = Math.floor(texture.height * SYMBOL_SCALE);
+    }
+
+    _createClass(Reel, [{
+        key: 'generateSymbolIDs',
+        value: function generateSymbolIDs() {
+            var i;
+            for (i = 0; i < ALL_SYMBOLS_AMOUNT; i++) {
+                var id = Math.floor(Math.random() * UNIQUE_SYMBOLS_AMOUNT);
+                this.symbolIDs.push(id);
+            }
+        }
+    }, {
+        key: 'createSymbols',
+        value: function createSymbols(symbolsToShow) {
+            var i;
+            for (i = 0; i < symbolsToShow.length; i++) {
+                var id = this.symbolIDs[symbolsToShow[i]];
+                var texture = PIXI.utils.TextureCache['M' + id + '_000.jpg'];
+                var symbol = new PIXI.Sprite(texture);
+
+                symbol.scale.x = SYMBOL_SCALE;
+                symbol.scale.y = SYMBOL_SCALE;
+
+                symbol.y = -2 * Math.floor(symbol.height) + i * Math.floor(symbol.height);
+
+                this._symbolsContainer.addChild(symbol);
+            }
         }
 
-        _createClass(Machine, [{
-                key: "createReels",
-                value: function createReels() {
+        // updateSymbols(symbolsToShow){
+        //
+        //     // this._symbolsContainer.removeChildren();
+        //
+        //     var i;
+        //     for (i = 0; i < symbolsToShow.length; i++) {
+        //         let id = this.symbolIDs[symbolsToShow[i]];
+        //         let texture = PIXI.utils.TextureCache[`M${id}_000.jpg`];
+        //         var symbol = new PIXI.Sprite(texture);
+        //
+        //         symbol.scale.x = SYMBOL_SCALE;
+        //         symbol.scale.y = SYMBOL_SCALE;
+        //
+        //         symbol.y = -2 * symbol.height + i * symbol.height;
+        //
+        //         this._symbolsContainer.addChild(symbol);
+        //     }
+        //
+        //     console.log(this._symbolsContainer.children.length);
+        // }
 
-                        var mySpriteSheetImage = PIXI.loader.resources["symbols"].texture;
-                        var spriteTexture1 = new PIXI.Texture(mySpriteSheetImage, new PIXI.Rectangle(0, 0, 65, 65));
-                        var mySprite = new PIXI.Sprite(spriteTexture1);
+        // spin(stopDelay){
+        //     this.spinner.spin(stopDelay, this.onPositionUpdated());
+        //
+        // }
 
-                        mySprite.scale.x = 2;
-                        mySprite.scale.y = 2;
+        // update(deltaTime){
+        //     this.spinner.update(deltaTime);
+        //     // this.reelContainer.y = this.spinner.update(deltaTime);
+        //     // this.reelContainer.y = this.spinner.update(deltaTime);
+        // }
 
-                        mySprite.y = 350;
+    }, {
+        key: 'updatePosition',
+        value: function updatePosition(spinDelta) {
 
-                        this.container.addChild(mySprite);
+            var shouldAdd = false;
+            var i;
+            var bottomSymbolY = 0;
+
+            for (i = 0; i < this._symbolsContainer.children.length; i++) {
+                var symbol = this._symbolsContainer.children[i];
+                symbol.y += Math.floor(spinDelta);
+
+                if (symbol.y > this.screenHeight) {
+                    this.shiftSymbols(-1);
+                    // this.addSymbolToTop(this.currentSymbols[0], symbol.y - (this._symbolsContainer.children.length) * this._symbolHeight);
+                    bottomSymbolY = symbol.y;
+                    shouldAdd = true;
+
+                    this._symbolsContainer.removeChild(symbol);
                 }
-        }, {
-                key: "view",
-                get: function get() {
+            }
 
-                        return this.container;
-                }
-        }]);
+            if (shouldAdd) {
+                var offset = bottomSymbolY - (this._symbolsContainer.children.length + 1) * this._symbolHeight;
+                this.addSymbolToTop(this.currentSymbols[0], offset);
+            }
+        }
+    }, {
+        key: 'addSymbolToTop',
+        value: function addSymbolToTop(index, offset) {
+            var id = this.symbolIDs[index];
+            var texture = PIXI.utils.TextureCache['M' + id + '_000.jpg'];
+            var symbol = new PIXI.Sprite(texture);
 
-        return Machine;
+            symbol.scale.x = SYMBOL_SCALE;
+            symbol.scale.y = SYMBOL_SCALE;
+
+            // symbol.y = this._symbolsContainer.children[0].y - this._symbolHeight;
+            symbol.y = offset;
+
+            this._symbolsContainer.addChildAt(symbol, 0);
+            this._symbolsContainer;
+        }
+    }, {
+        key: 'shiftSymbols',
+        value: function shiftSymbols(direction) {
+
+            var i;
+            for (i = 0; i < this.currentSymbols.length; i++) {
+                this.currentSymbols[i] += direction;
+
+                if (this.currentSymbols[i] < 0) this.currentSymbols[i] = this.symbolIDs.length - 1;
+
+                if (this.currentSymbols[i] > this.symbolIDs.length - 1) this.currentSymbols[i] = 0;
+            }
+
+            // this.updateSymbols(this.currentSymbols);
+
+            // var i;
+            // for (i=0; i < this._symbolsContainer.children.length; i++){
+            //     this._symbolsContainer.children[i].y += this._symbolHeight;
+            // }
+            // this._symbolsContainer
+        }
+    }, {
+        key: 'reelContainer',
+        get: function get() {
+            return this._symbolsContainer;
+        }
+    }, {
+        key: 'width',
+        get: function get() {
+
+            return REEL_WIDTH;
+        }
+    }, {
+        key: 'symbolHeight',
+        get: function get() {
+            return this._symbolHeight;
+        }
+
+        // get spinner(){
+        //
+        //     return this.spinner;
+        // }
+
+    }]);
+
+    return Reel;
 }();
 
-exports.default = Machine;
+exports.default = Reel;
+
+/***/ }),
+
+/***/ "./src/components/reelSpinner.js":
+/*!***************************************!*\
+  !*** ./src/components/reelSpinner.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _reel = __webpack_require__(/*! ./reel */ "./src/components/reel.js");
+
+var _reel2 = _interopRequireDefault(_reel);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var REEL_SPINING_SPEED = 15;
+var SPIN_DURATION = 100;
+var ACCELERATION_MULTIPLIER = 0.5;
+
+var ReelSpinner = function () {
+    function ReelSpinner(reel) {
+        _classCallCheck(this, ReelSpinner);
+
+        this.reel = reel;
+        this.symbolHeight = reel.symbolHeight;
+        this.spinDelta = 0;
+        this.isStarted = false;
+        this.speed = 0;
+        this.totalSpinDelta = 0;
+    }
+
+    _createClass(ReelSpinner, [{
+        key: "spin",
+        value: function spin(delay) {
+            this.delay = delay;
+            this.duration = SPIN_DURATION;
+            this.isStarted = true;
+        }
+    }, {
+        key: "easingBackIn",
+        value: function easingBackIn(t, b, c, d, s) {
+            return c * (t /= d) * t * ((s + 1) * t - s) + b;
+        }
+    }, {
+        key: "update",
+        value: function update(deltaTime) {
+
+            if (!this.isStarted) return;
+
+            if (this.duration > 0) {
+                this.duration -= deltaTime;
+
+                if (this.speed < REEL_SPINING_SPEED) this.speed += deltaTime * ACCELERATION_MULTIPLIER;
+            } else if (this.delay > 0) {
+                this.delay -= deltaTime;
+            } else if (this.speed > 0) {
+                this.speed -= deltaTime * 2;
+            }
+
+            this.spinDelta = deltaTime * this.speed;
+            this.totalSpinDelta += this.spinDelta;
+
+            if (this.speed < 0) {
+                var divided = this.totalSpinDelta / this.reel.symbolHeight;
+                var decimals = divided - Math.trunc(divided);
+                if (decimals < 0.1) this.speed = 0;
+            }
+
+            this.reel.updatePosition(this.spinDelta);
+
+            // if (this.spinDelta >= this.symbolHeight)
+            // {
+            //     this.spinDelta -= this.symbolHeight;
+            //     this.reel.shiftSymbols(-1);
+            // }
+            // else
+            // {
+            //     this.symbolsSnap = 0;
+            // }
+        }
+    }]);
+
+    return ReelSpinner;
+}();
+
+exports.default = ReelSpinner;
+
+/***/ }),
+
+/***/ "./src/components/reelsView.js":
+/*!*************************************!*\
+  !*** ./src/components/reelsView.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _reel = __webpack_require__(/*! ./reel */ "./src/components/reel.js");
+
+var _reel2 = _interopRequireDefault(_reel);
+
+var _pixi = __webpack_require__(/*! pixi.js */ "./node_modules/pixi.js/lib/index.js");
+
+var PIXI = _interopRequireWildcard(_pixi);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var REELS_AMOUNT = 5;
+var REELS_PADDING_X = 10;
+
+var ReelsView = function () {
+    function ReelsView(app) {
+        _classCallCheck(this, ReelsView);
+
+        this.app = app;
+        this.container = new PIXI.Container();
+        this._reels = [];
+
+        this.createReels();
+    }
+
+    _createClass(ReelsView, [{
+        key: "createReels",
+        value: function createReels() {
+
+            var i;
+            for (i = 0; i < REELS_AMOUNT; i++) {
+                var reel = new _reel2.default(this.app.renderer.height);
+                this._reels.push(reel);
+
+                var gap = this.app.renderer.width - REELS_PADDING_X * 2 - reel.width * REELS_AMOUNT;
+                var offset = REELS_PADDING_X + reel.width * i + i * gap / (REELS_AMOUNT - 1);
+
+                reel.reelContainer.x = offset;
+                this.container.addChild(reel.reelContainer);
+            }
+        }
+    }, {
+        key: "view",
+        get: function get() {
+
+            return this.container;
+        }
+    }, {
+        key: "reels",
+        get: function get() {
+
+            return this._reels;
+        }
+    }]);
+
+    return ReelsView;
+}();
+
+exports.default = ReelsView;
 
 /***/ }),
 
@@ -43654,20 +44053,24 @@ exports.default = Machine;
 "use strict";
 
 
-
 var _pixi = __webpack_require__(/*! pixi.js */ "./node_modules/pixi.js/lib/index.js");
 
 var PIXI = _interopRequireWildcard(_pixi);
 
-var _machine = __webpack_require__(/*! ./components/machine */ "./src/components/machine.js");
+var _reelsView = __webpack_require__(/*! ./components/reelsView */ "./src/components/reelsView.js");
 
-var _machine2 = _interopRequireDefault(_machine);
+var _reelsView2 = _interopRequireDefault(_reelsView);
+
+var _machineController = __webpack_require__(/*! ./components/machineController */ "./src/components/machineController.js");
+
+var _machineController2 = _interopRequireDefault(_machineController);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var app = new PIXI.Application({ width: 704, height: 368 });
+var machineController = void 0;
 
 document.body.appendChild(app.view);
 
@@ -43682,24 +44085,45 @@ screen.onorientationchange = resize;
 
 window.onresize = resize;
 
-PIXI.loader.add("background", "../assets/background.jpg").add("symbols", "../assets/symbolsAtlas.png").load(setup);
+PIXI.loader.add('./assets/assets.json').load(setup);
 
 function setup() {
 
     resize();
 
     fillBackGround();
+
+    var machine = new _reelsView2.default(app);
+    app.stage.addChild(machine.view);
+
+    machineController = new _machineController2.default(machine.reels);
+
+    createSpinButton();
 }
 
 function fillBackGround() {
 
-    var sprite = new PIXI.Sprite(PIXI.loader.resources["background"].texture);
+    var sprite = new PIXI.Sprite(PIXI.utils.TextureCache["background.jpg"]);
     sprite.scale.x = 1.1;
     app.stage.addChild(sprite);
+}
 
-    var machine = new _machine2.default();
-    // machine.createReels();
-    app.stage.addChild(machine.container);
+function createSpinButton() {
+
+    function onClick() {
+        machineController.spin();
+    }
+
+    var textureButton = PIXI.utils.TextureCache["spinButton.png"];
+    var spinButton = new PIXI.Sprite(textureButton);
+    spinButton.buttonMode = true;
+    spinButton.interactive = true;
+    spinButton.x = app.renderer.width - spinButton.width;
+    spinButton.y = app.renderer.height - spinButton.height;
+    app.stage.addChild(spinButton);
+
+    spinButton.tap = onClick;
+    spinButton.click = onClick;
 }
 
 function resize() {
