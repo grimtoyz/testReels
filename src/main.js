@@ -5,7 +5,7 @@ import * as PIXI from 'pixi.js';
 import ReelsView from "./components/reelsView";
 import MachineController from "./components/machineController";
 
-let app = new PIXI.Application({width: 704, height: 368});
+let app = new PIXI.Application({width: 704, height: 367});
 let machineController;
 
 document.body.appendChild(app.view);

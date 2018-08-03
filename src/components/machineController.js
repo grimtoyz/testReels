@@ -2,7 +2,7 @@
 
 import ReelSpinner from "./reelSpinner";
 
-const REEL_STOP_DELAY = 30;
+const REEL_STOP_DELAY = 50;
 
 var isSpinning = false;
 
@@ -44,8 +44,15 @@ export default class MachineController {
     update(deltaTime){
 
         var i;
+        var allFinished = true;
         for (i = 0; i < this.spinners.length; i++) {
             this.spinners[i].update(deltaTime);
+
+            if (!this.spinners[i].finished)
+                allFinished = false;
         }
+
+        if (allFinished)
+            isSpinning = false;
     }
 }

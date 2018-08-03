@@ -43611,7 +43611,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var REEL_STOP_DELAY = 30;
+var REEL_STOP_DELAY = 50;
 
 var isSpinning = false;
 
@@ -43656,9 +43656,14 @@ var MachineController = function () {
         value: function update(deltaTime) {
 
             var i;
+            var allFinished = true;
             for (i = 0; i < this.spinners.length; i++) {
                 this.spinners[i].update(deltaTime);
+
+                if (!this.spinners[i].finished) allFinished = false;
             }
+
+            if (allFinished) isSpinning = false;
         }
     }]);
 
@@ -43779,7 +43784,8 @@ var Reel = function () {
 
             for (i = 0; i < this._symbolsContainer.children.length; i++) {
                 var symbol = this._symbolsContainer.children[i];
-                symbol.y += Math.floor(spinDelta);
+                // symbol.y += Math.floor(spinDelta);
+                symbol.y += spinDelta;
 
                 if (symbol.y > this.screenHeight) {
                     this.shiftSymbols(-1);
@@ -43824,15 +43830,10 @@ var Reel = function () {
 
                 if (this.currentSymbols[i] > this.symbolIDs.length - 1) this.currentSymbols[i] = 0;
             }
-
-            // this.updateSymbols(this.currentSymbols);
-
-            // var i;
-            // for (i=0; i < this._symbolsContainer.children.length; i++){
-            //     this._symbolsContainer.children[i].y += this._symbolHeight;
-            // }
-            // this._symbolsContainer
         }
+    }, {
+        key: 'stop',
+        value: function stop() {}
     }, {
         key: 'reelContainer',
         get: function get() {
@@ -43888,8 +43889,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var REEL_SPINING_SPEED = 15;
-var SPIN_DURATION = 100;
+var REEL_SPINING_SPEED = 30;
+var REEL_BACK_SPINING_SPEED = -1;
+var SPIN_DURATION = 50;
 var ACCELERATION_MULTIPLIER = 0.5;
 
 var ReelSpinner = function () {
@@ -43898,23 +43900,22 @@ var ReelSpinner = function () {
 
         this.reel = reel;
         this.symbolHeight = reel.symbolHeight;
-        this.spinDelta = 0;
         this.isStarted = false;
-        this.speed = 0;
-        this.totalSpinDelta = 0;
     }
 
     _createClass(ReelSpinner, [{
         key: "spin",
         value: function spin(delay) {
+            this.spinDelta = 0;
             this.delay = delay;
             this.duration = SPIN_DURATION;
             this.isStarted = true;
-        }
-    }, {
-        key: "easingBackIn",
-        value: function easingBackIn(t, b, c, d, s) {
-            return c * (t /= d) * t * ((s + 1) * t - s) + b;
+            this.spinnedBackDistance = 0;
+            this.backTargetDistance = 0;
+            this.speed = 0;
+            this.totalSpinDelta = 0;
+            this._finished = false;
+            this.isBackEasing = false;
         }
     }, {
         key: "update",
@@ -43928,30 +43929,57 @@ var ReelSpinner = function () {
                 if (this.speed < REEL_SPINING_SPEED) this.speed += deltaTime * ACCELERATION_MULTIPLIER;
             } else if (this.delay > 0) {
                 this.delay -= deltaTime;
-            } else if (this.speed > 0) {
-                this.speed -= deltaTime * 2;
+            } else {
+                if (this.isBackEasing && !this._finished) this.speed = REEL_BACK_SPINING_SPEED;
+
+                this.updateStopping(deltaTime);
+                return;
             }
 
             this.spinDelta = deltaTime * this.speed;
             this.totalSpinDelta += this.spinDelta;
 
-            if (this.speed < 0) {
-                var divided = this.totalSpinDelta / this.reel.symbolHeight;
-                var decimals = divided - Math.trunc(divided);
-                if (decimals < 0.1) this.speed = 0;
+            this.reel.updatePosition(this.spinDelta);
+        }
+    }, {
+        key: "updateStopping",
+        value: function updateStopping(deltaTime) {
+
+            this.spinDelta = deltaTime * this.speed;
+
+            var totalSpinDelta = this.totalSpinDelta + this.spinDelta;
+
+            var divided = totalSpinDelta / this.reel.symbolHeight;
+            var decimals = divided - Math.trunc(divided);
+
+            if (!this.isBackEasing) {
+                if (decimals > 0.1 && decimals < 0.3) {
+                    this.speed = 0;
+                    this.spinDelta -= decimals * this.symbolHeight - 0.2 * this.symbolHeight;
+                    this.isBackEasing = true;
+                    this.backTargetDistance = 0.2 * this.symbolHeight;
+                }
+            } else {
+
+                this.spinnedBackDistance += Math.abs(this.spinDelta);
+
+                if (this.spinnedBackDistance >= this.backTargetDistance) {
+                    this.speed = 0;
+                    // this.spinDelta -= this.spinnedBackDistance - this.backTargetDistance;
+                    this.spinDelta -= decimals * this.symbolHeight - this.symbolHeight;
+                    this._finished = true;
+                    this.isStarted = false;
+                }
             }
 
-            this.reel.updatePosition(this.spinDelta);
+            this.totalSpinDelta += this.spinDelta;
 
-            // if (this.spinDelta >= this.symbolHeight)
-            // {
-            //     this.spinDelta -= this.symbolHeight;
-            //     this.reel.shiftSymbols(-1);
-            // }
-            // else
-            // {
-            //     this.symbolsSnap = 0;
-            // }
+            this.reel.updatePosition(this.spinDelta);
+        }
+    }, {
+        key: "finished",
+        get: function get() {
+            return this._finished;
         }
     }]);
 
@@ -44069,7 +44097,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var app = new PIXI.Application({ width: 704, height: 368 });
+var app = new PIXI.Application({ width: 704, height: 367 });
 var machineController = void 0;
 
 document.body.appendChild(app.view);

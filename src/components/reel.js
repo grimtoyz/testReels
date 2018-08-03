@@ -17,7 +17,6 @@ export default class Reel {
 
         this.currentSymbols = [0, 1, 2, 3, 4];
         this.createSymbols(this.currentSymbols);
-        // this.updateSymbols(this.currentSymbols);
 
         let texture = PIXI.utils.TextureCache['M0_000.jpg'];
         this._symbolHeight = Math.floor(texture.height * SYMBOL_SCALE);
@@ -47,37 +46,6 @@ export default class Reel {
         }
     }
 
-    // updateSymbols(symbolsToShow){
-    //
-    //     // this._symbolsContainer.removeChildren();
-    //
-    //     var i;
-    //     for (i = 0; i < symbolsToShow.length; i++) {
-    //         let id = this.symbolIDs[symbolsToShow[i]];
-    //         let texture = PIXI.utils.TextureCache[`M${id}_000.jpg`];
-    //         var symbol = new PIXI.Sprite(texture);
-    //
-    //         symbol.scale.x = SYMBOL_SCALE;
-    //         symbol.scale.y = SYMBOL_SCALE;
-    //
-    //         symbol.y = -2 * symbol.height + i * symbol.height;
-    //
-    //         this._symbolsContainer.addChild(symbol);
-    //     }
-    //
-    //     console.log(this._symbolsContainer.children.length);
-    // }
-
-    // spin(stopDelay){
-    //     this.spinner.spin(stopDelay, this.onPositionUpdated());
-    //
-    // }
-
-    // update(deltaTime){
-    //     this.spinner.update(deltaTime);
-    //     // this.reelContainer.y = this.spinner.update(deltaTime);
-    //     // this.reelContainer.y = this.spinner.update(deltaTime);
-    // }
 
     updatePosition(spinDelta){
 
@@ -87,11 +55,11 @@ export default class Reel {
 
         for (i=0; i < this._symbolsContainer.children.length; i++){
             let symbol = this._symbolsContainer.children[i];
-            symbol.y += Math.floor(spinDelta);
+            // symbol.y += Math.floor(spinDelta);
+            symbol.y += spinDelta;
 
             if (symbol.y > this.screenHeight){
                 this.shiftSymbols(-1);
-                // this.addSymbolToTop(this.currentSymbols[0], symbol.y - (this._symbolsContainer.children.length) * this._symbolHeight);
                 bottomSymbolY = symbol.y;
                 shouldAdd = true;
 
@@ -114,7 +82,6 @@ export default class Reel {
         symbol.scale.x = SYMBOL_SCALE;
         symbol.scale.y = SYMBOL_SCALE;
 
-        // symbol.y = this._symbolsContainer.children[0].y - this._symbolHeight;
         symbol.y = offset;
 
         this._symbolsContainer.addChildAt(symbol, 0);
@@ -133,14 +100,6 @@ export default class Reel {
             if (this.currentSymbols[i] > this.symbolIDs.length - 1)
                 this.currentSymbols[i] = 0;
         }
-
-        // this.updateSymbols(this.currentSymbols);
-
-        // var i;
-        // for (i=0; i < this._symbolsContainer.children.length; i++){
-        //     this._symbolsContainer.children[i].y += this._symbolHeight;
-        // }
-        // this._symbolsContainer
     }
 
     get reelContainer(){
@@ -155,9 +114,4 @@ export default class Reel {
     get symbolHeight(){
         return this._symbolHeight;
     }
-
-    // get spinner(){
-    //
-    //     return this.spinner;
-    // }
 }
